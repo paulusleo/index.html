@@ -635,7 +635,7 @@
         getRedirectResult(auth)
             .then((result) => {
                 if (result && result.user) {
-                    console.log('✅ Login via redirect successful!');
+                    console.log('✅ Login via redirect successful!', result.user.email);
                 }
             })
             .catch((error) => {
@@ -645,7 +645,23 @@
                 }
             });
 
-        window.firebaseDB = { database, auth, provider, ref, push, set, onValue, remove, signInWithRedirect, signOut };
+        // IMPORTANT: Export fungsi signInWithRedirect ke window
+        window.firebaseAuth = {
+            signInWithRedirect,
+            signOut
+        };
+
+        window.firebaseDB = { 
+            database, 
+            auth, 
+            provider, 
+            ref, 
+            push, 
+            set, 
+            onValue, 
+            remove
+        };
+        
         window.savingsData = [];
         window.currentFilter = 'all';
         window.targetAmount = 10000000;
@@ -698,11 +714,12 @@
     </script>
 
     <script>
-        // Login Function - FIXED untuk mobile
+        // Login Function - FIXED untuk mobile dengan syntax yang benar
         window.loginWithGoogle = async function() {
             try {
-                // Pakai redirect untuk mobile compatibility (no popup blocking)
-                await window.firebaseDB.auth.signInWithRedirect(window.firebaseDB.provider);
+                console.log('🔐 Attempting login with redirect...');
+                // SYNTAX BENAR untuk Firebase v10 modular
+                await window.firebaseAuth.signInWithRedirect(window.firebaseDB.auth, window.firebaseDB.provider);
             } catch (error) {
                 console.error('❌ Login error:', error);
                 alert('Error login: ' + error.message);
@@ -712,7 +729,7 @@
         window.logout = async function() {
             if (confirm('Yakin ingin logout?')) {
                 try {
-                    await window.firebaseDB.signOut(window.firebaseDB.auth);
+                    await window.firebaseAuth.signOut(window.firebaseDB.auth);
                     localStorage.clear();
                     window.location.reload();
                 } catch (error) {
@@ -721,8 +738,10 @@
             }
         };
 
+        // Set default date to today
         document.getElementById('date').valueAsDate = new Date();
 
+        // Form Submit Handler
         document.getElementById('celenganForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
